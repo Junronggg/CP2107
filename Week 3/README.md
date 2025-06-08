@@ -6,7 +6,9 @@ refer to hw_setup for environment set up
 - cs285/agents/pg_agent.py
 - cs285/networks/policies.py
 - cs285/infrastructure/utils.py
-- cs285/scripts/plot_learning_curves.py
+- cs285/plot_batchsize.py
+- cs285/plot_lb+rtg.py
+- cs285/plot_sb+rtg.py
 
 ## Code explaination
 - pg_agent.py: handles trajectory collection + calls policy update
@@ -34,3 +36,13 @@ refer to hw_setup for environment set up
   - Calls agent.train() and logs results
 
 - utils.py: builds models, processes rollouts, computes helper stats
+
+## Experiment results & plot graphs
+- sb+no rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 --exp_name cartpole --seed 10
+- sb+rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 -rtg --exp_name cartpole_rtg --seed 10
+- lg+no rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 --exp_name cartpole_lb --seed 10
+- lg+rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 -rtg --exp_name cartpole_lb_rtg --seed 10
+- see effect of rtg (lb+no rtg vs lb+rtg; sb+no rtg vs sb+rtg):
+  - python plot_sb+rtg.py
+  - python plot_lb+rtg.py
+- see effect of batch size: python plot_batchsize.py

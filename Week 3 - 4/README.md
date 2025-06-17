@@ -40,8 +40,12 @@ refer to hw_setup for environment set up
 ## Experiment results & plot graphs
 - sb+no rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 --exp_name cartpole --seed 10
 - sb+rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 -rtg --exp_name cartpole_rtg --seed 10
+- sb+na: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 -na --exp_name cartpole_na --seed 10
+- sb+rtg+na: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 -rtg -na --exp_name cartpole_rtg --seed 10
 - lg+no rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 --exp_name cartpole_lb --seed 10
 - lg+rtg: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 -rtg --exp_name cartpole_lb_rtg --seed 10
+- lg+na: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 -na --exp_name cartpole_lb_na --seed 10
+- lg+rtg+na: python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 -rtg -na --exp_name cartpole_lb_rtg_na --seed 10
 - see effect of rtg (lb+no rtg vs lb+rtg; sb+no rtg vs sb+rtg):
   - python plot_sb+rtg.py
   - python plot_lb+rtg.py

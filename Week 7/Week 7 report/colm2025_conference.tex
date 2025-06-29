@@ -1,0 +1,172 @@
+\documentclass{article} % For LaTeX2e
+\usepackage[final]{colm2025_conference}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{lineno}
+\usepackage{amsmath}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{subcaption} % For subfigure arrangement
+\usepackage{caption}
+\usepackage{array}
+\usepackage{booktabs}
+
+
+
+\definecolor{darkblue}{rgb}{0, 0, 0.5}
+\hypersetup{colorlinks=true, citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
+
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@maketitle}
+  {Published as a conference paper at COLM 2025}
+  {}
+  {}
+  {}
+\makeatother
+\title{Week 7 Report}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the \colmfinalcopy macro remains commented out below.
+% Non-anonymous submissions will be rejected without review.
+
+\author{Mu Junrong}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+\begin{document}
+
+\ifcolmsubmission
+\linenumbers
+\fi
+
+\maketitle
+
+\begin{abstract}
+This report focuses on the introduction to the inference of Large Language Models (LLMs) from the Qwen series using the vLLM inference engine (\cite{vllm2023}). Furthermore, four Qwen models are used on a set of factual and open-ended prompts, two base and two instruction-tuned. The output by each model using difference sampling temperatures are evaluated, based on their correctness and helpfulness. 
+\end{abstract}
+
+\section{Introduction to Large Language Models (LLMs) inference}
+Large Language Models (LLMs) inference refers to the process of using a trained large language model (LLM) (e.g., GPT, LLaMA, or PaLM) to generate outputs (i.e., text or answers) based on input prompts. The training process of an LLM involves adjusting its weights using large datasets, while inference runs the model on new data without changing its weights.
+
+Large language models (LLMs) inference is usually used for real-world applications, including Chatbots and auto-complete in code editors. During inference, the prompt is tokenised, and tokens are passed through the transformer layers of the model. The transformer model then produces logits (i.e., probabilities for next token), and a token is selected (e.g. via greedy, sampling, beam search). The steps are repeated until the output is complete. 
+
+To experiment on LLMs inference, vLLM is used to run Qwen Large Language Models.
+
+\subsection{vLLM}
+vLLM (\cite{vllm2023}) is an open-source high-performance inference server and runtime optimised specifically for large language models (LLMs). It is designed to serve LLMs efficiently, providing faster and more scalable text generation compared to standard implementations (i.e., it is the engine to run models on the laptop) (\cite{dao2022flashattention}). It is built on top of PyTorch and NVIDIA CUDA for GPU acceleration. 
+
+vLLM introduces a new attention mechanism called PagedAttention (\cite{vllm2023}), which significantly improves GPU memory efficiency. In normal transformer inference, every new token must attend to all past tokens, creating Key-Value cache. Each input also needs a separate chunk of memory for the Key-Value cache, causing fragmentation and wasted memory. For PagedAttention, prompt is received when the user sends a prompt, and PagedAttention assigns pages instead of allocating a long contiguous buffer for KV cache. It allocates small fixed-size pages and adds them to a page table per request. Attention uses the page table and during attention computation, query tokens look up past key/value tokens across the pages, and thus there is no need for continuous memory. When a request ends, its pages are returned to the pool and reused. Thus, it reduces memory needed and uses all GPU resources efficiently.
+
+\subsection{Qwen}
+Qwen (Tongyi Qianwen in Chinese, meaning "Thousand Questions of Tongyi") is a family of Large Language Models (LLMs) developed by Alibaba DAMO Academy. It shows strong performance on multilingual tasks (especially Chinese), and performs well on commonsense, math, and reading comprehension.
+
+\subsection{Experiment Setup}
+To examine different models' performance and the effect of different sampling temperatures, the experiment is set up as follows. NVIDIA GPU and Python 3.9 are used. For each model, four sampling temperatures (i.e., 0, 0.6, 1, 1.5) are used, and each model is trailed for three times. Four prompts are used to observe the LLMs' performance:
+\begin{itemize}
+    \item “How many positive whole-number divisors does 196 have?”
+    \item “The capital of Singapore is”
+    \item Who are you?”
+    \item “What is the range of the output of tanh?”
+\end{itemize}
+
+
+\section{Analysis of different sampling temperatures}
+Sampling temperature (\cite{holtzman2019curious}) is a hyperparameter used during inference, which determines the randomness and creativity of the Large Language Model (LLM) when generating text. It is part of the sampling strategy for selecting the next token during generation.
+
+During inference, the model computes a logit (unnormalized score) for each possible next token. These logits are then transformed into probabilities using the softmax function
+
+\[ P_i = \frac{e^{z_i}}{\sum_j e^{z_j}} \]
+
+Where \( z_i \) is the logit for token \( i \) and \( P_i \) is the probability of selecting token \( i \).
+
+Temperature modifies the logits before softmax application by 
+\[ P_i = \frac{e^{z_i/T}}{\sum_j e^{z_j/T}} \]
+
+Where \( T \) is the temperature parameter
+
+For example, the prompt is given by "The cat sat on the". The model predicts the next word by producing logits (unnormalized scores), where token "mat" has logit 3, token "couch" has logit 2.5 and token elephant has logit 1. When the sampling temperature is 0, the model always picks the highest logit which is "mat". When the sampling temperature is 1, after applying softmax, \(P(couch) = 0.2\), thus "couch" may be chosen. The higher the sampling temperature, the more random the output.
+
+\subsection{Meaning of temperatures}
+As explained, the higher the \(T\), the more uniform probabilities (more random outputs), which may be better for storytelling. On the other hand, lower \( T \) sharpen the distribution, which produces more deterministic outputs.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{5cm}|p{8cm}|}
+
+\hline
+\textbf{Temperature Value} & \textbf{Description} \\ 
+\hline
+0 & No randomness. The model always picks the most probable next token, which ensures the output to be deterministic and factual. \\
+\hline
+0.6 & Low randomness. There is slight diversity but the output is still relatively reliable. \\
+\hline
+1.0 & Balanced randomness. Outputs are diverse and more natural. \\
+\hline
+1.5+ & High randomness. More surprising or creative results, but higher risk of being nonsensical or wrong. \\
+\hline
+\end{tabular}
+\caption{Effects of Different Temperature Settings}
+\label{tab:temperature}
+\end{table}
+
+\subsection{Analysis of different sampling temperatures on the output}
+For example, for the model Qwen 2.5, when the sampling temperature is set to 0, the output to the prompt "How many positive whole-number divisors does 196 have?" is always the same. 
+
+\section{Analysis of different models}
+In the experiment, four models are used: Qwen2.5-0.5B (
+\cite{qwen2.5-0.5b}), Qwen2.5-0.5B-Instruct (\cite{qwen2.5-0.5b-instruct}), Qwen3-0.6B-Base (\cite{qwen3-0.6b-base}) and Qwen3-0.6B (\cite{qwen3-0.6b}). They are from Qwen 2.5 and Qwen 3, and two of them are base models while another two are instruct models. Overall, Qwen3-0.6B shows better performance since the base is newer, and it is instructed. 
+
+\subsection{Qwen 2.5 v.s. Qwen 3}
+The model Qwen 2.5 has more parameters 
+For example, when the prompt is a creative (instead of factual) question such as "Who are you?", Qwen 2.5 produces the output "What is your purpose in life?" for many times repetitively, which is wrong and not meaningful. On the other hand, Qwen 3 produces more relevant result. 
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|p{3cm}|p{5cm}|p{5cm}|}
+    \hline
+    & Qwen2.5-0.5B& Qwen3-0.6B\\ \hline
+    Training data and model size& The model is trained on web corpus, books and code (English, Chinese).
+It is trained on 0.5 billion parameters& The model is trained on Larger and more diverse corpus with cleaner filtering. It is trained on 0.6 billion parameters\\ \hline
+    Model type& 	Decoder-only transformer (GPT-style)& 	Decoder-only transformer (GPT-style)\\ \hline
+    Performance& Performance on basic math and reasoning	is acceptable, with high correctness on factual outputs. The JSON formatting is poor, and it shows poor performance on creative questions.& Performance on factual questions are more robust and detailed. The JSON formatting is good with structured output generated. \\ \hline
+  \end{tabular}
+  \caption{Qwen 2.5 model vs Qwen 3 model}
+  \label{tab:your_label}
+\end{table}
+
+\subsection{Base model v.s. Instruct model}
+In the experiment, Qwen2.5-0.5B and Qwen3-0.6B-Base are base models, and Qwen2.5-0.5B-Instruct and Qwen3-0.6B are instruct models. Base models are pretrained LLMs trained only on next-token prediction, while instruct models are finetuned using Reinforcement Learning from Human Feedback (RLHF) (\cite{ouyang2022training}). 
+\begin{table}[H]
+  \centering
+  \begin{tabular}{|p{3cm}|p{5cm}|p{5cm}|}
+    \hline
+    & Base model& Instruct model\\ \hline
+    Training process& The model is trained on massive datasets via self-supervised learning (e.g., web text, books and code) to predict the next token.& The model is a finetuned version (using supervised instruction-following data and RLHF) of the base model, optimized to follow instructions in a human-aligned way.\\ \hline
+    Performance& It predicts the next token in a sequence, but it is not optimised for conversational tasks. It may produce unsafe and offensive outputs.& It responds to prompts such as  “Write a summary” or “Give a step-by-step answer” with aligned, structured output.\\ \hline
+  \end{tabular}
+  \caption{Base models vs Instruct models}
+  \label{tab:your_label}
+\end{table}
+
+
+
+\bibliography{colm2025_conference}
+\bibliographystyle{colm2025_conference}
+
+
+\end{document}

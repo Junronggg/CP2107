@@ -1,0 +1,6 @@
+Solve the following math problem step-by-step and give the final answer.
+
+Problem:
+{problem}
+
+Solution:
